@@ -22,6 +22,17 @@ import { clearSession, getSession, saveSession } from './lib/storage'
 import { currentMonth } from './lib/finance'
 
 const views = { dashboard: Dashboard, registrar: RegistrarGasto, historial: HistorialGastos, presupuesto: PresupuestoMensual, reportes: Reportes }
+const pathsByView = {
+  login: '/',
+  cuenta: '/crear-cuenta',
+  dashboard: '/dashboard',
+  registrar: '/registrar-gasto',
+  historial: '/historial',
+  presupuesto: '/presupuesto',
+  reportes: '/reportes',
+}
+const viewsByPath = Object.fromEntries(Object.entries(pathsByView).map(([view, path]) => [path, view]))
+const publicViews = new Set(['login', 'cuenta'])
 const navigation = [
   ['dashboard', '⌂', 'Resumen'],
   ['registrar', '+', 'Registrar gasto'],
@@ -29,6 +40,14 @@ const navigation = [
   ['presupuesto', '◎', 'Presupuesto'],
   ['reportes', '↗', 'Reportes'],
 ]
+
+function normalizePath(pathname) {
+  return pathname.replace(/\/+$/, '') || '/'
+}
+
+function viewFromPath(pathname) {
+  return viewsByPath[normalizePath(pathname)] || 'login'
+}
 
 function normalizeUser(user) {
   return { id: user.usuarioId, name: user.nombre, email: user.email || user.correo }
@@ -63,7 +82,7 @@ function normalizeBudget(budget) {
 export default function App() {
   const [user, setUser] = useState(null)
   const [ready, setReady] = useState(false)
-  const [view, setView] = useState('dashboard')
+  const [view, setView] = useState(() => viewFromPath(window.location.pathname))
   const [expenses, setExpenses] = useState([])
   const [budgets, setBudgets] = useState({})
   const [appError, setAppError] = useState('')
@@ -93,35 +112,92 @@ export default function App() {
     setExpenses((expenseData.gastos || []).map(normalizeExpense))
   }, [loadBudget])
 
+  const navigate = useCallback((nextView, options = {}) => {
+    const safeView = pathsByView[nextView] ? nextView : 'login'
+    const nextPath = pathsByView[safeView]
+    if (normalizePath(window.location.pathname) !== nextPath) {
+      const method = options.replace ? 'replaceState' : 'pushState'
+      window.history[method]({}, '', nextPath)
+    }
+    setView(safeView)
+  }, [])
+
+  const restoreStoredSession = useCallback(async () => {
+    const stored = getSession()
+    if (!stored) return false
+    try {
+      const profile = apiConfigurada
+        ? normalizeUser(await obtenerUsuario(stored.usuarioId))
+        : { id: stored.usuarioId, name: stored.nombre, email: stored.correo }
+      await loadUserData(profile)
+      setUser(profile)
+      setAppError('')
+      return true
+    } catch (error) {
+      console.error('No se pudo restaurar la sesión.', error)
+      clearSession()
+      setUser(null)
+      setAppError('No pudimos restaurar tu sesión. Inicia sesión nuevamente.')
+      return false
+    }
+  }, [loadUserData])
+
   useEffect(() => {
     let active = true
-    async function restoreSession() {
-      const stored = getSession()
-      if (!stored) {
-        if (active) setReady(true)
+    async function initializeRoute() {
+      const path = normalizePath(window.location.pathname)
+      const routeExists = Boolean(viewsByPath[path])
+      const initialView = viewFromPath(path)
+
+      if (!routeExists || publicViews.has(initialView)) {
+        if (!routeExists) navigate('login', { replace: true })
+        if (active) {
+          setView(initialView)
+          setReady(true)
+        }
         return
       }
-      try {
-        const profile = apiConfigurada
-          ? normalizeUser(await obtenerUsuario(stored.usuarioId))
-          : { id: stored.usuarioId, name: stored.nombre, email: stored.correo }
-        if (!active) return
-        await loadUserData(profile)
-        if (active) setUser(profile)
-      } catch (error) {
-        console.error('No se pudo restaurar la sesión.', error)
-        clearSession()
-        if (active) {
-          setUser(null)
-          setAppError('No pudimos restaurar tu sesión. Inicia sesión nuevamente.')
-        }
-      } finally {
-        if (active) setReady(true)
+
+      const restored = await restoreStoredSession()
+      if (active) {
+        if (!restored) navigate('login', { replace: true })
+        setReady(true)
       }
     }
-    restoreSession()
+    initializeRoute()
     return () => { active = false }
-  }, [loadUserData])
+  }, [navigate, restoreStoredSession])
+
+  useEffect(() => {
+    async function handlePopState() {
+      const path = normalizePath(window.location.pathname)
+      const routeExists = Boolean(viewsByPath[path])
+      const nextView = viewFromPath(path)
+
+      if (!routeExists) {
+        navigate('login', { replace: true })
+        return
+      }
+
+      setView(nextView)
+      if (publicViews.has(nextView)) {
+        setUser(null)
+        setExpenses([])
+        setBudgets({})
+        return
+      }
+
+      if (!user) {
+        setReady(false)
+        const restored = await restoreStoredSession()
+        if (!restored) navigate('login', { replace: true })
+        setReady(true)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [navigate, restoreStoredSession, user])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -137,7 +213,7 @@ export default function App() {
     saveSession(sessionFromUser(profile))
     setUser(profile)
     setAppError('')
-    setView('dashboard')
+    navigate('dashboard')
   }
 
   async function handleLogin(credentials) {
@@ -158,7 +234,7 @@ export default function App() {
     setExpenses([])
     setBudgets({})
     setToast(null)
-    setView('login')
+    navigate('login', { replace: true })
   }
 
   async function addExpense(expense) {
@@ -190,7 +266,7 @@ export default function App() {
         setToast({ type: 'success', message: `Gasto registrado correctamente. Has usado el ${used}% de tu presupuesto mensual.` })
       }
     }
-    setView('dashboard')
+    navigate('dashboard')
   }
 
   async function removeExpense(expense) {
@@ -239,10 +315,8 @@ export default function App() {
 
   if (!ready) return <div className="loading-screen">Conectando con tus finanzas…</div>
 
-  if (!user) {
-    if (view === 'cuenta') return <CrearCuenta onCreate={handleCreateAccount} onNavigate={setView} apiConfigured={apiConfigurada} />
-    return <Login onLogin={handleLogin} onNavigate={setView} apiConfigured={apiConfigurada} initialError={appError} />
-  }
+  if (view === 'cuenta') return <CrearCuenta onCreate={handleCreateAccount} onNavigate={navigate} apiConfigured={apiConfigurada} />
+  if (view === 'login' || !user) return <Login onLogin={handleLogin} onNavigate={navigate} apiConfigured={apiConfigurada} initialError={appError} />
 
   const Screen = views[view] || Dashboard
   const screenProps = {
@@ -251,7 +325,7 @@ export default function App() {
     budgets,
     budget: currentBudget,
     apiConfigured: apiConfigurada,
-    onNavigate: setView,
+    onNavigate: navigate,
     onAddExpense: addExpense,
     onDeleteExpense: removeExpense,
     onQueryExpenses: queryExpenses,
@@ -263,12 +337,12 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <button className="brand" onClick={() => setView('dashboard')}>
+        <button className="brand" onClick={() => navigate('dashboard')}>
           <span className="brand-mark">M</span><span>Mis Gastos<small>Finanzas personales</small></span>
         </button>
         <nav aria-label="Navegación principal">
           {navigation.map(([key, icon, label]) => (
-            <button className={view === key ? 'active' : ''} key={key} onClick={() => setView(key)}>
+            <button className={view === key ? 'active' : ''} key={key} onClick={() => navigate(key)}>
               <span aria-hidden="true">{icon}</span>{label}
             </button>
           ))}
