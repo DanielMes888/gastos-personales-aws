@@ -18,9 +18,13 @@ export function Dashboard({ user, expenses, budget, onNavigate }) {
       </header>
       <section className="hero-grid">
         <article className="balance-card">
-          <span>Total gastado</span><strong>{currency.format(summary.total)}</strong>
-          <div className="balance-meta"><span>{summary.count} {summary.count === 1 ? 'movimiento' : 'movimientos'}</span><span>{summary.percent.toFixed(1)}% del límite</span></div>
+          <span>Progreso del presupuesto mensual</span><strong>{summary.percent.toFixed(1)}%</strong>
           <div className="progress"><span className={summary.status.key} style={{ width: `${Math.min(summary.percent, 100)}%` }} /></div>
+          <div className="budget-breakdown">
+            <span><small>Gastado</small><b>{currency.format(summary.total)}</b></span>
+            <span><small>Presupuesto</small><b>{summary.limit ? currency.format(summary.limit) : 'Sin definir'}</b></span>
+            <span><small>{summary.percent > 100 ? 'Excedido' : 'Disponible'}</small><b>{currency.format(summary.percent > 100 ? summary.total - summary.limit : Math.max(summary.limit - summary.total, 0))}</b></span>
+          </div>
         </article>
         <article className={`status-card ${summary.status.key}`}>
           <span className="status-symbol" aria-hidden="true">{summary.status.key === 'danger' ? '!' : summary.status.key === 'warning' ? '△' : '✓'}</span>
@@ -40,7 +44,7 @@ export function Dashboard({ user, expenses, budget, onNavigate }) {
         </section>
         <section className="panel category-panel">
           <div><p className="eyebrow">DISTRIBUCIÓN</p><h2>Por categoría</h2></div>
-          {Object.keys(categories).length ? <div className="category-list">{Object.entries(categories).sort((a, b) => b[1] - a[1]).map(([category, amount]) => <div key={category}><div><span><i style={{ background: CATEGORY_COLORS[category] }} />{category}</span><strong>{currency.format(amount)}</strong></div><div className="mini-bar"><i style={{ width: `${summary.total ? (amount / summary.total) * 100 : 0}%`, background: CATEGORY_COLORS[category] }} /></div></div>)}</div> : <div className="empty-state compact"><p>Las categorías aparecerán aquí.</p></div>}
+          {Object.keys(categories).length ? <div className="category-list">{Object.entries(categories).sort((a, b) => b[1] - a[1]).map(([category, amount]) => <div key={category}><div><span><i style={{ background: CATEGORY_COLORS[category] }} />{category}</span><strong>{currency.format(amount)}</strong></div><div className="mini-bar"><i style={{ width: `${summary.total ? (amount / summary.total) * 100 : 0}%`, background: CATEGORY_COLORS[category] }} /></div></div>)}</div> : <div className="empty-state compact"><p>Aún no hay gastos registrados para generar gráficos.</p></div>}
         </section>
       </div>
     </>

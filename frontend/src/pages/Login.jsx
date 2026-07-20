@@ -26,7 +26,7 @@ export function Login({ onLogin, onNavigate, apiConfigured, initialError = '' })
     <main className="auth-page">
       <section className="auth-copy">
         <div className="auth-brand"><span className="brand-mark">M</span> Mis Gastos</div>
-        <div><p className="eyebrow">FINANZAS PERSONALES</p><h1>Tu dinero, más claro cada día.</h1><p>Registra tus gastos, cuida tu presupuesto y toma decisiones con tranquilidad.</p></div>
+        <div><p className="eyebrow">FINANZAS PERSONALES EN AWS</p><h1>Sistema de Monitoreo de Gastos Personales</h1><p>Controla tus gastos, presupuesto y reportes desde una aplicación distribuida en AWS.</p></div>
         <div className="auth-metric"><span>Control simple</span><strong>Una vista completa de tu mes</strong></div>
       </section>
       <form className="auth-card" onSubmit={handleSubmit}>

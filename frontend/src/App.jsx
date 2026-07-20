@@ -185,9 +185,9 @@ export default function App() {
       if (refreshedBudget.percent > 100) {
         setToast({ type: 'danger', message: `Presupuesto superado: has usado el ${used}% de tu presupuesto mensual.` })
       } else if (refreshedBudget.percent >= refreshedBudget.alert) {
-        setToast({ type: 'warning', message: `Atención: estás cerca del límite. Has usado el ${used}% de tu presupuesto mensual.` })
+        setToast({ type: 'warning', message: `Atención: estás cerca del límite de tu presupuesto. Has usado el ${used}%.` })
       } else {
-        setToast({ type: 'success', message: `Gasto registrado. Has usado el ${used}% de tu presupuesto mensual.` })
+        setToast({ type: 'success', message: `Gasto registrado correctamente. Has usado el ${used}% de tu presupuesto mensual.` })
       }
     }
     setView('dashboard')

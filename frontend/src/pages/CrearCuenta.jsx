@@ -35,7 +35,7 @@ export function CrearCuenta({ onCreate, onNavigate, apiConfigured }) {
     <main className="auth-page">
       <section className="auth-copy">
         <div className="auth-brand"><span className="brand-mark">M</span> Mis Gastos</div>
-        <div><p className="eyebrow">EMPIEZA HOY</p><h1>Haz espacio para lo que importa.</h1><p>Crea tu cuenta y comienza a entender en qué se va tu dinero.</p></div>
+        <div><p className="eyebrow">EMPIEZA HOY</p><h1>Sistema de Monitoreo de Gastos Personales</h1><p>Controla tus gastos, presupuesto y reportes desde una aplicación distribuida en AWS.</p></div>
         <div className="auth-metric"><span>{apiConfigured ? 'Conectado a AWS' : 'API no configurada'}</span><strong>{apiConfigured ? 'Tus finanzas disponibles desde la API' : 'Define VITE_API_URL para crear una cuenta'}</strong></div>
       </section>
       <form className="auth-card" onSubmit={handleSubmit}>

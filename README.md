@@ -54,6 +54,13 @@ La sección **Reportes** permite descargar dos formatos:
 
 Los archivos PDF usan el nombre `reporte-gastos-YYYY-MM.pdf`.
 
+## Mejoras de experiencia y visualización
+
+- **Alertas visuales de presupuesto:** al registrar un gasto se recalcula el porcentaje mensual y se muestra un aviso según el nivel alcanzado.
+- **Eliminación de gastos:** cada movimiento puede eliminarse desde el historial con confirmación previa; el dashboard y el presupuesto se actualizan después.
+- **Gráficos simples:** el dashboard presenta el progreso del presupuesto y una distribución por categorías construida con CSS, sin dependencias de visualización adicionales.
+- **Diseño fintech responsive:** la interfaz usa un tema oscuro azul/morado, tarjetas glassmorphism y controles adaptados para escritorio y móvil.
+
 ## Validar el backend y SAM
 
 Con Python 3.12 y AWS SAM CLI instalados:
