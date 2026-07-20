@@ -132,7 +132,31 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #37d7f2
 .stat-grid article > span, .stat-grid small { color: var(--muted); font-size: .76rem; }
 .stat-grid article > strong { overflow: hidden; text-overflow: ellipsis; font-size: 1.32rem; }
 .stat-grid article > small, .stat-grid article > button { margin-top: auto; }
+.dashboard-visualizations { margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.dashboard-visualizations .panel { margin-top: 0; }
+.budget-progress-section { min-height: 300px; display: flex; flex-direction: column; gap: 28px; }
+.budget-progress-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.budget-progress-summary > span { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(5, 12, 33, .34); display: grid; gap: 6px; }
+.budget-progress-summary small { color: var(--muted); font-size: .72rem; }
+.budget-progress-summary strong { overflow: hidden; text-overflow: ellipsis; font-size: 1rem; }
+.budget-progress-summary .negative { border-color: rgba(255, 115, 136, .3); background: rgba(139, 30, 52, .14); }
+.budget-progress-summary .negative small, .budget-progress-summary .negative strong { color: #ff9aaa; }
+.budget-progress-bar { height: 14px; overflow: hidden; border: 1px solid rgba(139, 170, 225, .14); border-radius: 999px; background: rgba(4, 10, 29, .64); box-shadow: inset 0 2px 7px rgba(0, 0, 0, .28); }
+.budget-progress-fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #28c8ed, #6d83ff); box-shadow: 0 0 18px rgba(55, 215, 242, .42); transition: width .35s ease; }
+.budget-progress-fill.warning { background: linear-gradient(90deg, #ffc45f, #ff9f43); }
+.budget-progress-fill.danger { background: linear-gradient(90deg, #ff7b8f, #ff4f72); }
+.category-chart-panel { min-height: 300px; }
+.category-chart { margin-top: 28px; display: grid; gap: 18px; }
+.category-chart-row { display: grid; gap: 8px; }
+.category-chart-label { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #d9e4f7; font-size: .8rem; }
+.category-chart-label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.category-chart-track { height: 12px; overflow: hidden; border-radius: 999px; background: rgba(139, 160, 204, .13); box-shadow: inset 0 1px 4px rgba(0, 0, 0, .24); }
+.category-chart-fill { display: block; min-width: 4px; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--bar-color) 72%, #37d7f2), var(--bar-color)); box-shadow: 0 0 14px color-mix(in srgb, var(--bar-color) 34%, transparent); transition: width .35s ease; }
+.category-chart-value { flex: 0 0 auto; color: #f4f7ff; font-size: .8rem; }
+.chart-empty-state { min-height: 190px; color: var(--muted); display: grid; place-items: center; align-content: center; gap: 14px; text-align: center; }
+.chart-empty-state p { margin: 0; }
 .dashboard-columns { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(290px, .75fr); gap: 18px; }
+.dashboard-columns.recent-only { grid-template-columns: minmax(0, 1fr); }
 .expense-list { margin-top: 12px; }
 .expense-list > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 13px; padding: 15px 0; border-top: 1px solid var(--line); }
 .expense-list > div:first-child { border-top: 0; }
@@ -230,7 +254,7 @@ td:nth-last-child(2) { color: var(--ink); font-weight: 800; }
 
 @media (max-width: 1050px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .dashboard-columns, .form-layout, .report-layout { grid-template-columns: 1fr; }
+  .dashboard-columns, .dashboard-visualizations, .form-layout, .report-layout { grid-template-columns: 1fr; }
   .form-aside { display: none; }
 }
 
@@ -269,6 +293,7 @@ td:nth-last-child(2) { color: var(--ink); font-weight: 800; }
   .stat-grid { grid-template-columns: 1fr 1fr; }
   .stat-grid article { min-height: 138px; padding: 17px; }
   .stat-grid article > strong { font-size: 1.1rem; }
+  .budget-progress-summary { grid-template-columns: 1fr; }
   .status-card { padding: 22px; }
   .panel { padding: 20px; }
   .expense-form, .form-grid { grid-template-columns: 1fr; }
