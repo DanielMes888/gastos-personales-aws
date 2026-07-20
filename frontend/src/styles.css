@@ -214,6 +214,8 @@ td:nth-last-child(2) { color: var(--ink); font-weight: 800; }
 /* Reports */
 .report-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr); gap: 20px; }
 .report-builder { display: grid; gap: 22px; }
+.report-actions { display: flex; flex-wrap: wrap; gap: 11px; }
+.report-actions > button { flex: 1 1 170px; }
 .report-builder > div:nth-child(2) p { margin-bottom: 0; color: var(--muted); font-size: .84rem; }
 .report-icon { width: 58px; height: 58px; border-radius: 15px; color: white; background: var(--green); display: grid; place-items: center; font-family: 'Manrope', sans-serif; font-weight: 800; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }

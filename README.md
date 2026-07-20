@@ -9,7 +9,7 @@ frontend/                       Interfaz React y estilos CSS
 backend/usuarios_service/       Registro, login y consulta de usuarios
 backend/gastos_service/         Registro y consulta de gastos
 backend/presupuestos_service/   Presupuestos mensuales
-backend/reportes_service/       Generación de CSV en S3
+backend/reportes_service/       Generación de CSV privado en S3
 infra/template.yaml             API Gateway, Lambdas, DynamoDB, S3 e IAM
 docs/                           Arquitectura y contrato de API
 ```
@@ -44,6 +44,15 @@ VITE_API_URL=https://abc123.execute-api.us-east-1.amazonaws.com/dev
 ```
 
 Reinicia `npm run dev` después de modificar `.env`; Vite carga estas variables al iniciar.
+
+## Descargar reportes
+
+La sección **Reportes** permite descargar dos formatos:
+
+- **CSV:** `ReportesService` genera el archivo, lo guarda cifrado en el bucket privado de S3 y devuelve una URL firmada temporal para descargarlo. Sin `VITE_API_URL`, el navegador genera el CSV localmente como fallback.
+- **PDF:** el frontend genera el reporte mensual directamente en el navegador con el usuario, presupuesto, estado y detalle de gastos visibles. El PDF no se envía ni se guarda en AWS.
+
+Los archivos PDF usan el nombre `reporte-gastos-YYYY-MM.pdf`.
 
 ## Validar el backend y SAM
 

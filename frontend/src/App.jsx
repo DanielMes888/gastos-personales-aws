@@ -149,6 +149,7 @@ export default function App() {
     await crearUsuario({ nombre: account.name, correo: account.email, contraseña: account.password })
     const result = await login({ correo: account.email, contraseña: account.password })
     await startSession(result.usuario)
+    setToast({ type: 'success', message: 'Cuenta creada correctamente.' })
   }
 
   function handleLogout() {
