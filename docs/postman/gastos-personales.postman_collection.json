@@ -1,0 +1,172 @@
+{
+  "info": {
+    "_postman_id": "b1ff6e31-8932-4f65-a7fb-402c55f96712",
+    "name": "Sistema de Gastos Personales",
+    "description": "Requests de ejemplo para probar la API desplegada con AWS SAM. Ejecutar en el orden indicado.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://API_ID.execute-api.REGION.amazonaws.com/dev" },
+    { "key": "usuarioId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Crear usuario",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "  const payload = pm.response.json();",
+              "  pm.collectionVariables.set('usuarioId', payload.data.usuarioId);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Ana Pérez\",\n  \"correo\": \"ana@example.com\",\n  \"contraseña\": \"segura123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/usuarios",
+        "description": "Crea el usuario y guarda automáticamente usuarioId como variable de colección. Cambia el correo para repetir la prueba."
+      },
+      "response": [
+        {
+          "name": "Usuario creado",
+          "originalRequest": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/usuarios" },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "cookie": [],
+          "body": "{\n  \"ok\": true,\n  \"data\": {\n    \"usuarioId\": \"f9cf7bee-7a12-4a82-a7da-a89529c94d90\",\n    \"nombre\": \"Ana Pérez\",\n    \"email\": \"ana@example.com\",\n    \"creadoEn\": \"2026-07-19T15:30:00+00:00\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "2. Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"correo\": \"ana@example.com\",\n  \"contraseña\": \"segura123\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/login"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Consultar usuario",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/usuarios/{{usuarioId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["usuarios", "{{usuarioId}}"]
+        },
+        "description": "Consulta el usuario creado en el primer request usando la variable usuarioId."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Registrar gasto",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"usuarioId\": \"{{usuarioId}}\",\n  \"monto\": 85.50,\n  \"categoria\": \"Alimentación\",\n  \"descripcion\": \"Supermercado\",\n  \"fecha\": \"2026-07-19\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/gastos"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Consultar gastos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/gastos/{{usuarioId}}?mes=7&anio=2026&categoria=Alimentación",
+          "host": ["{{baseUrl}}"],
+          "path": ["gastos", "{{usuarioId}}"],
+          "query": [
+            { "key": "mes", "value": "7" },
+            { "key": "anio", "value": "2026" },
+            { "key": "categoria", "value": "Alimentación" }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "6. Crear presupuesto",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"usuarioId\": \"{{usuarioId}}\",\n  \"mes\": \"2026-07\",\n  \"limiteMensual\": 100,\n  \"porcentajeAlerta\": 80\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/presupuestos"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Consultar presupuesto",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/presupuestos/{{usuarioId}}?mes=2026-07",
+          "host": ["{{baseUrl}}"],
+          "path": ["presupuestos", "{{usuarioId}}"],
+          "query": [{ "key": "mes", "value": "2026-07" }]
+        },
+        "description": "Con el gasto de 85.50 y límite de 100, la respuesta esperada tiene estado CERCA_DEL_LIMITE."
+      },
+      "response": [
+        {
+          "name": "Cerca del límite",
+          "originalRequest": { "method": "GET", "header": [], "url": "{{baseUrl}}/presupuestos/{{usuarioId}}?mes=2026-07" },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "cookie": [],
+          "body": "{\n  \"ok\": true,\n  \"data\": {\n    \"usuarioId\": \"f9cf7bee-7a12-4a82-a7da-a89529c94d90\",\n    \"mes\": \"2026-07\",\n    \"limiteMensual\": 100,\n    \"porcentajeAlerta\": 80,\n    \"actualizadoEn\": \"2026-07-19T15:40:00+00:00\",\n    \"totalGastado\": 85.5,\n    \"porcentajeUsado\": 85.5,\n    \"estado\": \"CERCA_DEL_LIMITE\",\n    \"cantidadGastos\": 1,\n    \"disponible\": 14.5\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "8. Generar reporte",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/reportes/{{usuarioId}}?mes=7&anio=2026",
+          "host": ["{{baseUrl}}"],
+          "path": ["reportes", "{{usuarioId}}"],
+          "query": [
+            { "key": "mes", "value": "7" },
+            { "key": "anio", "value": "2026" }
+          ]
+        },
+        "description": "Genera el CSV, lo guarda en S3 y devuelve bucket y key."
+      },
+      "response": []
+    }
+  ]
+}

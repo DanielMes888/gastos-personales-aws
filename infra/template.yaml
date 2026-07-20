@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sistema de Monitoreo de Gastos Personales
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    MemorySize: 128
+    Timeout: 10
+
+Resources:
+  GastosApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: gastos-personales-api
+      StageName: dev
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+  UsuariosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: UsuariosService
+      CodeUri: ../backend/usuarios_service/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          USUARIOS_TABLE: !Ref UsuariosDB
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [dynamodb:GetItem, dynamodb:PutItem]
+              Resource: !GetAtt UsuariosDB.Arn
+            - Effect: Allow
+              Action: dynamodb:Query
+              Resource: !Sub ${UsuariosDB.Arn}/index/EmailIndex
+      Events:
+        CrearUsuario:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: /usuarios
+            Method: post
+        Login:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: /login
+            Method: post
+        ObtenerUsuario:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: "/usuarios/{usuarioId}"
+            Method: get
+
+  GastosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GastosService
+      CodeUri: ../backend/gastos_service/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          GASTOS_TABLE: !Ref GastosDB
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [dynamodb:PutItem, dynamodb:Query]
+              Resource: !GetAtt GastosDB.Arn
+      Events:
+        CrearGasto:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: /gastos
+            Method: post
+        ListarGastos:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: "/gastos/{usuarioId}"
+            Method: get
+
+  PresupuestosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: PresupuestosService
+      CodeUri: ../backend/presupuestos_service/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          PRESUPUESTOS_TABLE: !Ref PresupuestosDB
+          GASTOS_TABLE: !Ref GastosDB
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [dynamodb:GetItem, dynamodb:PutItem]
+              Resource: !GetAtt PresupuestosDB.Arn
+            - Effect: Allow
+              Action: dynamodb:Query
+              Resource: !GetAtt GastosDB.Arn
+      Events:
+        GuardarPresupuesto:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: /presupuestos
+            Method: post
+        ObtenerPresupuesto:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: "/presupuestos/{usuarioId}"
+            Method: get
+
+  ReportesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ReportesService
+      CodeUri: ../backend/reportes_service/
+      Handler: app.lambda_handler
+      Timeout: 20
+      Environment:
+        Variables:
+          GASTOS_TABLE: !Ref GastosDB
+          REPORTES_BUCKET: !Ref ReportesBucket
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: dynamodb:Query
+              Resource: !GetAtt GastosDB.Arn
+            - Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub ${ReportesBucket.Arn}/*
+      Events:
+        GenerarReporte:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: "/reportes/{usuarioId}"
+            Method: get
+
+  UsuariosDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UsuariosDB
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: usuarioId, AttributeType: S }
+        - { AttributeName: email, AttributeType: S }
+      KeySchema:
+        - { AttributeName: usuarioId, KeyType: HASH }
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - { AttributeName: email, KeyType: HASH }
+          Projection: { ProjectionType: ALL }
+
+  GastosDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: GastosDB
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: usuarioId, AttributeType: S }
+        - { AttributeName: gastoId, AttributeType: S }
+      KeySchema:
+        - { AttributeName: usuarioId, KeyType: HASH }
+        - { AttributeName: gastoId, KeyType: RANGE }
+
+  PresupuestosDB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PresupuestosDB
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: usuarioId, AttributeType: S }
+        - { AttributeName: mes, AttributeType: S }
+      KeySchema:
+        - { AttributeName: usuarioId, KeyType: HASH }
+        - { AttributeName: mes, KeyType: RANGE }
+
+  ReportesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Outputs:
+  ApiBaseUrl:
+    Description: URL base de API Gateway
+    Value: !Sub https://${GastosApi}.execute-api.${AWS::Region}.amazonaws.com/dev
+  ReportesBucketName:
+    Description: Bucket privado de reportes CSV
+    Value: !Ref ReportesBucket

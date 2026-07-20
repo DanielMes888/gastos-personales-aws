@@ -1,0 +1,1 @@
+# boto3 está incluido en el runtime administrado de AWS Lambda.
