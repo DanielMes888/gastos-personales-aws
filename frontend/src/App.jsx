@@ -10,6 +10,7 @@ import {
   apiConfigurada,
   crearGasto,
   crearUsuario,
+  eliminarGasto,
   generarReporte,
   guardarPresupuesto,
   login,
@@ -49,7 +50,14 @@ function normalizeExpense(expense) {
 
 function normalizeBudget(budget) {
   if (!budget) return null
-  return { limit: Number(budget.limiteMensual), alert: Number(budget.porcentajeAlerta), raw: budget }
+  return {
+    limit: Number(budget.limiteMensual),
+    alert: Number(budget.porcentajeAlerta),
+    percent: Number(budget.porcentajeUsado),
+    status: budget.estado,
+    exists: true,
+    raw: budget,
+  }
 }
 
 export default function App() {
@@ -59,6 +67,7 @@ export default function App() {
   const [expenses, setExpenses] = useState([])
   const [budgets, setBudgets] = useState({})
   const [appError, setAppError] = useState('')
+  const [toast, setToast] = useState(null)
 
   const loadBudget = useCallback(async (usuarioId, month) => {
     try {
@@ -68,7 +77,7 @@ export default function App() {
       return normalized
     } catch (error) {
       if (error.code === 'BUDGET_NOT_FOUND') {
-        setBudgets((current) => ({ ...current, [month]: { limit: 0, alert: 80 } }))
+        setBudgets((current) => ({ ...current, [month]: { limit: 0, alert: 80, exists: false } }))
         return null
       }
       throw error
@@ -100,10 +109,11 @@ export default function App() {
         await loadUserData(profile)
         if (active) setUser(profile)
       } catch (error) {
+        console.error('No se pudo restaurar la sesión.', error)
         clearSession()
         if (active) {
           setUser(null)
-          setAppError(error.message)
+          setAppError('No pudimos restaurar tu sesión. Inicia sesión nuevamente.')
         }
       } finally {
         if (active) setReady(true)
@@ -112,6 +122,12 @@ export default function App() {
     restoreSession()
     return () => { active = false }
   }, [loadUserData])
+
+  useEffect(() => {
+    if (!toast) return undefined
+    const timeoutId = window.setTimeout(() => setToast(null), 5000)
+    return () => window.clearTimeout(timeoutId)
+  }, [toast])
 
   const currentBudget = useMemo(() => budgets[currentMonth()] || { limit: 0, alert: 80 }, [budgets])
 
@@ -140,6 +156,7 @@ export default function App() {
     setUser(null)
     setExpenses([])
     setBudgets({})
+    setToast(null)
     setView('login')
   }
 
@@ -152,7 +169,44 @@ export default function App() {
       fecha: expense.date,
     })
     setExpenses((current) => [normalizeExpense(created), ...current])
+    const expenseMonth = expense.date.slice(0, 7)
+    let refreshedBudget = null
+    try {
+      refreshedBudget = await loadBudget(user.id, expenseMonth)
+    } catch (error) {
+      console.error('El gasto se guardó, pero no se pudo refrescar el presupuesto.', error)
+    }
+
+    if (!refreshedBudget || !Number.isFinite(refreshedBudget.percent)) {
+      setToast({ type: 'success', message: 'Gasto registrado correctamente.' })
+    } else {
+      const used = Math.round(refreshedBudget.percent)
+      if (refreshedBudget.percent > 100) {
+        setToast({ type: 'danger', message: `Presupuesto superado: has usado el ${used}% de tu presupuesto mensual.` })
+      } else if (refreshedBudget.percent >= refreshedBudget.alert) {
+        setToast({ type: 'warning', message: `Atención: estás cerca del límite. Has usado el ${used}% de tu presupuesto mensual.` })
+      } else {
+        setToast({ type: 'success', message: `Gasto registrado. Has usado el ${used}% de tu presupuesto mensual.` })
+      }
+    }
     setView('dashboard')
+  }
+
+  async function removeExpense(expense) {
+    await eliminarGasto(user.id, expense.id)
+    setExpenses((current) => current.filter((item) => item.id !== expense.id))
+    try {
+      const expenseData = await obtenerGastos(user.id, {})
+      setExpenses((expenseData.gastos || []).map(normalizeExpense))
+    } catch (error) {
+      console.error('El gasto se eliminó, pero no se pudo recargar la lista completa.', error)
+    }
+    try {
+      await loadBudget(user.id, expense.date.slice(0, 7))
+    } catch (error) {
+      console.error('El gasto se eliminó, pero no se pudo refrescar el presupuesto.', error)
+    }
+    setToast({ type: 'success', message: 'Gasto eliminado correctamente.' })
   }
 
   const queryExpenses = useCallback(async (filters) => {
@@ -198,6 +252,7 @@ export default function App() {
     apiConfigured: apiConfigurada,
     onNavigate: setView,
     onAddExpense: addExpense,
+    onDeleteExpense: removeExpense,
     onQueryExpenses: queryExpenses,
     onLoadBudget: queryBudget,
     onUpdateBudget: updateBudget,
@@ -227,6 +282,7 @@ export default function App() {
         {!apiConfigurada && <p className="connection-banner">Modo local de desarrollo · configura VITE_API_URL para usar AWS</p>}
         <Screen {...screenProps} />
       </main>
+      {toast && <div className={`toast ${toast.type}`} role="status" aria-live="polite">{toast.message}</div>}
     </div>
   )
 }

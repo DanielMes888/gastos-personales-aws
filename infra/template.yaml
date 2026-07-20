@@ -16,7 +16,7 @@ Resources:
       Name: gastos-personales-api
       StageName: dev
       Cors:
-        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowMethods: "'GET,POST,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization'"
         AllowOrigin: "'*'"
 
@@ -69,7 +69,7 @@ Resources:
       Policies:
         - Statement:
             - Effect: Allow
-              Action: [dynamodb:PutItem, dynamodb:Query]
+              Action: [dynamodb:PutItem, dynamodb:Query, dynamodb:DeleteItem]
               Resource: !GetAtt GastosDB.Arn
       Events:
         CrearGasto:
@@ -84,6 +84,12 @@ Resources:
             RestApiId: !Ref GastosApi
             Path: "/gastos/{usuarioId}"
             Method: get
+        EliminarGasto:
+          Type: Api
+          Properties:
+            RestApiId: !Ref GastosApi
+            Path: "/gastos/{usuarioId}/{gastoId}"
+            Method: delete
 
   PresupuestosFunction:
     Type: AWS::Serverless::Function
@@ -134,7 +140,7 @@ Resources:
               Action: dynamodb:Query
               Resource: !GetAtt GastosDB.Arn
             - Effect: Allow
-              Action: s3:PutObject
+              Action: [s3:PutObject, s3:GetObject]
               Resource: !Sub ${ReportesBucket.Arn}/*
       Events:
         GenerarReporte:

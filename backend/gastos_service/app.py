@@ -17,7 +17,7 @@ table = boto3.resource("dynamodb").Table(os.environ.get("GASTOS_TABLE", "GastosD
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": os.environ.get("CORS_ORIGIN", "*"),
     "Access-Control-Allow-Headers": "Content-Type,Authorization",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
     "Content-Type": "application/json; charset=utf-8",
 }
 
@@ -127,6 +127,20 @@ def lambda_handler(event, _context):
                 items = [item for item in items if item.get("categoria", "").casefold() == categoria.casefold()]
             items.sort(key=lambda item: (item.get("fecha", ""), item.get("creadoEn", "")), reverse=True)
             return json_response(200, {"gastos": items, "cantidad": len(items), "filtros": {"mes": mes or None, "anio": anio or None, "categoria": categoria or None}})
+
+        if method == "DELETE" and path == "/gastos/{usuarioId}/{gastoId}":
+            path_parameters = event.get("pathParameters") or {}
+            usuario_id = str(path_parameters.get("usuarioId", "")).strip()
+            gasto_id = str(path_parameters.get("gastoId", "")).strip()
+            if not usuario_id or not gasto_id:
+                return error_response(400, "VALIDATION_ERROR", "usuarioId y gastoId son requeridos.")
+            result = table.delete_item(
+                Key={"usuarioId": usuario_id, "gastoId": gasto_id},
+                ReturnValues="ALL_OLD",
+            )
+            if not result.get("Attributes"):
+                return error_response(404, "EXPENSE_NOT_FOUND", "El gasto solicitado no existe.")
+            return json_response(200, {"usuarioId": usuario_id, "gastoId": gasto_id, "eliminado": True})
 
         return error_response(405, "METHOD_NOT_ALLOWED", "Método o ruta no permitidos.")
     except (ValueError, ArithmeticError) as exc:

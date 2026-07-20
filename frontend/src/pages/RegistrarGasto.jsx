@@ -20,7 +20,8 @@ export function RegistrarGasto({ onNavigate, onAddExpense }) {
         date: form.get('date'),
       })
     } catch (saveError) {
-      setError(saveError.message)
+      console.error('Error al registrar el gasto.', saveError)
+      setError('No se pudo registrar el gasto. Intenta nuevamente.')
     } finally {
       setLoading(false)
     }

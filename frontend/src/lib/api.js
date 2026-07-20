@@ -98,6 +98,16 @@ export async function obtenerGastos(usuarioId, filtros = {}) {
   return { gastos, cantidad: gastos.length, filtros }
 }
 
+export async function eliminarGasto(usuarioId, gastoId) {
+  if (apiConfigurada) {
+    return request(`/gastos/${encodeURIComponent(usuarioId)}/${encodeURIComponent(gastoId)}`, { method: 'DELETE' })
+  }
+  const index = localState.expenses.findIndex((expense) => expense.usuarioId === usuarioId && expense.gastoId === gastoId)
+  if (index < 0) throw new ApiError('El gasto solicitado no existe.', 404, 'EXPENSE_NOT_FOUND')
+  localState.expenses.splice(index, 1)
+  return { usuarioId, gastoId, eliminado: true }
+}
+
 export async function guardarPresupuesto(data) {
   if (apiConfigurada) return post('/presupuestos', data)
   const index = localState.budgets.findIndex((item) => item.usuarioId === data.usuarioId && item.mes === data.mes)

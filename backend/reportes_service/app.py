@@ -120,11 +120,22 @@ def lambda_handler(event, _context):
             ContentType="text/csv; charset=utf-8",
             ServerSideEncryption="AES256",
         )
+        download_url = s3.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": bucket_name,
+                "Key": key,
+                "ResponseContentType": "text/csv; charset=utf-8",
+                "ResponseContentDisposition": f'attachment; filename="reporte-gastos-{period}.csv"',
+            },
+            ExpiresIn=900,
+        )
         return json_response(200, {
             "bucket": bucket_name,
             "key": key,
             "cantidadRegistros": len(items),
             "contentType": "text/csv",
+            "downloadUrl": download_url,
         })
     except ValueError as exc:
         return error_response(400, "INVALID_REQUEST", str(exc))

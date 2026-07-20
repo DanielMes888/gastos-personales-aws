@@ -13,7 +13,10 @@ export function Login({ onLogin, onNavigate, apiConfigured, initialError = '' })
     try {
       await onLogin({ email: form.get('email'), password: form.get('password') })
     } catch (loginError) {
-      setError(loginError.message)
+      console.error('Error al iniciar sesión.', loginError)
+      setError(loginError.code === 'API_NOT_CONFIGURED'
+        ? 'La conexión con la API no está configurada.'
+        : 'No se pudo iniciar sesión. Verifica tu correo y contraseña.')
     } finally {
       setLoading(false)
     }

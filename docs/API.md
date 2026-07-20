@@ -121,6 +121,23 @@ Respuesta `200`:
 }
 ```
 
+### DELETE `/gastos/{usuarioId}/{gastoId}`
+
+Elimina un gasto del usuario. No requiere body. Devuelve `404` con `EXPENSE_NOT_FOUND` cuando el gasto no existe.
+
+Respuesta `200`:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "usuarioId": "f9cf7bee-7a12-4a82-a7da-a89529c94d90",
+    "gastoId": "0711259d-6fc3-4528-b8e7-b5a549e55f36",
+    "eliminado": true
+  }
+}
+```
+
 ## PresupuestosService
 
 ### POST `/presupuestos`
@@ -181,7 +198,7 @@ Si no existe presupuesto devuelve `404` con `BUDGET_NOT_FOUND`.
 
 ### GET `/reportes/{usuarioId}`
 
-Genera un CSV, lo guarda cifrado en S3 y devuelve su ubicación. Acepta los mismos filtros opcionales de gastos y no requiere body.
+Genera un CSV, lo guarda cifrado en el bucket privado de S3 y devuelve una URL de descarga firmada válida durante 15 minutos. Acepta los mismos filtros opcionales de gastos y no requiere body.
 
 Respuesta `200`:
 
@@ -192,11 +209,12 @@ Respuesta `200`:
     "bucket": "stack-reportesbucket-abcd1234",
     "key": "f9cf7bee-7a12-4a82-a7da-a89529c94d90/2026-07/reporte-20260719T154500Z.csv",
     "cantidadRegistros": 1,
-    "contentType": "text/csv"
+    "contentType": "text/csv",
+    "downloadUrl": "https://stack-reportesbucket-abcd1234.s3.amazonaws.com/..."
   }
 }
 ```
 
 ## CORS y códigos comunes
 
-API Gateway permite `GET`, `POST` y `OPTIONS`, con los headers `Content-Type` y `Authorization`. Los códigos habituales son `200`, `201`, `400`, `401`, `404`, `405`, `409` y `500`.
+API Gateway permite `GET`, `POST`, `DELETE` y `OPTIONS`, con los headers `Content-Type` y `Authorization`. Los códigos habituales son `200`, `201`, `400`, `401`, `404`, `405`, `409` y `500`.

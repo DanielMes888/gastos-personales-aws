@@ -48,6 +48,13 @@ class FakeTable:
         item = next((item for item in self.items if all(item.get(key) == value for key, value in Key.items())), None)
         return {"Item": item.copy()} if item else {}
 
+    def delete_item(self, Key, **_kwargs):
+        item = next((item for item in self.items if all(item.get(key) == value for key, value in Key.items())), None)
+        if not item:
+            return {}
+        self.items.remove(item)
+        return {"Attributes": item.copy()}
+
 
 class FakeDynamoResource:
     def __init__(self, tables):
@@ -64,6 +71,9 @@ class FakeS3:
     def put_object(self, **kwargs):
         self.objects.append(kwargs)
         return {"ETag": "fake"}
+
+    def generate_presigned_url(self, operation, Params, ExpiresIn):
+        return f"https://signed.example/{Params['Bucket']}/{Params['Key']}?expires={ExpiresIn}&operation={operation}"
 
 
 class ServiceTests(unittest.TestCase):
@@ -112,12 +122,19 @@ class ServiceTests(unittest.TestCase):
         self.s3.objects.clear()
 
     @staticmethod
-    def event(method, resource, body=None, user_id=None, query=None):
+    def event(method, resource, body=None, user_id=None, expense_id=None, query=None):
+        path_parameters = None
+        if user_id or expense_id:
+            path_parameters = {}
+            if user_id:
+                path_parameters["usuarioId"] = user_id
+            if expense_id:
+                path_parameters["gastoId"] = expense_id
         return {
             "httpMethod": method,
             "resource": resource,
             "body": json.dumps(body) if body is not None else None,
-            "pathParameters": {"usuarioId": user_id} if user_id else None,
+            "pathParameters": path_parameters,
             "queryStringParameters": query,
         }
 
@@ -163,6 +180,22 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(payload["cantidad"], 1)
         self.assertEqual(payload["gastos"][0]["monto"], 50)
 
+    def test_gastos_delete(self):
+        self.tables["GastosDB"].items.append({
+            "usuarioId": "user-1", "gastoId": "g-1", "fecha": "2026-07-04", "monto": Decimal("10"),
+        })
+        result = self.gastos.lambda_handler(
+            self.event("DELETE", "/gastos/{usuarioId}/{gastoId}", user_id="user-1", expense_id="g-1"), None,
+        )
+        self.assertEqual(result["statusCode"], 200)
+        self.assertTrue(self.body(result)["data"]["eliminado"])
+        self.assertEqual(self.tables["GastosDB"].items, [])
+
+        missing = self.gastos.lambda_handler(
+            self.event("DELETE", "/gastos/{usuarioId}/{gastoId}", user_id="user-1", expense_id="missing"), None,
+        )
+        self.assertEqual(missing["statusCode"], 404)
+
     def test_presupuesto_calculates_warning_state(self):
         self.tables["GastosDB"].items.extend([
             {"usuarioId": "user-1", "gastoId": "1", "fecha": "2026-07-04", "monto": Decimal("60")},
@@ -198,6 +231,8 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(payload["bucket"], "reportes-test")
         self.assertEqual(payload["cantidadRegistros"], 1)
         self.assertTrue(payload["key"].endswith(".csv"))
+        self.assertEqual(payload["contentType"], "text/csv")
+        self.assertIn("https://signed.example/", payload["downloadUrl"])
         csv_body = self.s3.objects[0]["Body"].decode("utf-8-sig")
         self.assertIn("Café", csv_body)
 
