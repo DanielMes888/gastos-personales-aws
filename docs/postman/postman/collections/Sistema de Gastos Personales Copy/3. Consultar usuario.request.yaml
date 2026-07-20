@@ -1,0 +1,5 @@
+$kind: http-request
+description: Consulta el usuario creado en el primer request usando la variable usuarioId.
+url: "{{baseUrl}}/usuarios/{{usuarioId}}"
+method: GET
+order: 3000

@@ -1,0 +1,30 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/presupuestos/{{usuarioId}}?mes=2026-07"
+  method: GET
+  queryParams:
+    mes: 2026-07
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "ok": true,
+        "data": {
+          "usuarioId": "f9cf7bee-7a12-4a82-a7da-a89529c94d90",
+          "mes": "2026-07",
+          "limiteMensual": 100,
+          "porcentajeAlerta": 80,
+          "actualizadoEn": "2026-07-19T15:40:00+00:00",
+          "totalGastado": 85.5,
+          "porcentajeUsado": 85.5,
+          "estado": "CERCA_DEL_LIMITE",
+          "cantidadGastos": 1,
+          "disponible": 14.5
+        }
+      }
+order: 1000

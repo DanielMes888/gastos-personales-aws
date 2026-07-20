@@ -1,0 +1,5 @@
+$kind: collection
+description: Requests de ejemplo para probar la API desplegada con AWS SAM. Ejecutar en el orden indicado.
+variables:
+  baseUrl: https://API_ID.execute-api.REGION.amazonaws.com/dev
+  usuarioId: ""

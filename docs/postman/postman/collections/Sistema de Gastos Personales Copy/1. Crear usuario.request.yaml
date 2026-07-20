@@ -1,0 +1,24 @@
+$kind: http-request
+description: Crea el usuario y guarda automáticamente usuarioId como variable de colección. Cambia el correo para repetir la prueba.
+url: "{{baseUrl}}/usuarios"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Ana Pérez",
+      "correo": "ana@example.com",
+      "contraseña": "segura123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 201) {
+        const payload = pm.response.json();
+        pm.collectionVariables.set('usuarioId', payload.data.usuarioId);
+      }
+    language: text/javascript
+examples: ./.resources/1. Crear usuario.resources/examples
+order: 1000

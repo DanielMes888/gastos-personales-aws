@@ -1,0 +1,8 @@
+$kind: http-request
+description: Genera el CSV, lo guarda en S3 y devuelve bucket y key.
+url: "{{baseUrl}}/reportes/{{usuarioId}}?mes=7&anio=2026"
+method: GET
+queryParams:
+  mes: "7"
+  anio: "2026"
+order: 8000

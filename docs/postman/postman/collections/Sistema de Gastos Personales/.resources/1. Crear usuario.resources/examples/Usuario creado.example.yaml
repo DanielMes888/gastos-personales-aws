@@ -1,0 +1,24 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/usuarios"
+  method: POST
+  headers:
+    Content-Type: application/json
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "ok": true,
+        "data": {
+          "usuarioId": "f9cf7bee-7a12-4a82-a7da-a89529c94d90",
+          "nombre": "Ana Pérez",
+          "email": "ana@example.com",
+          "creadoEn": "2026-07-19T15:30:00+00:00"
+        }
+      }
+order: 1000

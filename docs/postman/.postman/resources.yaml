@@ -1,0 +1,14 @@
+# Use this workspace to collaborate
+workspace:
+  id: 09e25e3a-d76d-4504-8437-b1a70786853c
+
+localResources:
+  collections:
+    - ../gastos-personales.postman_collection.json
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/Sistema de Gastos Personales: 1c77ee85-8bfb-4282-86ce-d8a70754446e
+    ../postman/collections/Sistema de Gastos Personales Copy: 10874f5e-dcaa-4998-8803-5fd7bdc10b4d

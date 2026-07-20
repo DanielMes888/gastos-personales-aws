@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/gastos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "usuarioId": "{{usuarioId}}",
+      "monto": 85.50,
+      "categoria": "Alimentación",
+      "descripcion": "Supermercado",
+      "fecha": "2026-07-19"
+    }
+order: 4000

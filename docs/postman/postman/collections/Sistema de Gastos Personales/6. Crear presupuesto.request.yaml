@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/presupuestos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "usuarioId": "{{usuarioId}}",
+      "mes": "2026-07",
+      "limiteMensual": 100,
+      "porcentajeAlerta": 80
+    }
+order: 6000

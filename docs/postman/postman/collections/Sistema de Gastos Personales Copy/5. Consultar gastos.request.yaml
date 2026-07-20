@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/gastos/{{usuarioId}}?mes=7&anio=2026&categoria=Alimentación"
+method: GET
+queryParams:
+  mes: "7"
+  anio: "2026"
+  categoria: Alimentación
+order: 5000

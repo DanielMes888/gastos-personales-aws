@@ -1,0 +1,8 @@
+$kind: http-request
+description: Con el gasto de 85.50 y límite de 100, la respuesta esperada tiene estado CERCA_DEL_LIMITE.
+url: "{{baseUrl}}/presupuestos/{{usuarioId}}?mes=2026-07"
+method: GET
+queryParams:
+  mes: 2026-07
+examples: ./.resources/7. Consultar presupuesto.resources/examples
+order: 7000
